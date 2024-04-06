@@ -10,6 +10,12 @@ li {
     padding: 0;
 }
 
+.navBtn {
+    background-color: #fff;
+    border-color: #fff;
+    border-radius: 50px;
+}
+
 body {
     font-family: Arial, sans-serif;
     background-color: #f8f8f8;
@@ -19,6 +25,7 @@ header {
     background-color: #333;
     color: #fff;
     padding: 20px;
+    text-align: center;
 }
 
 header h1 {
@@ -72,6 +79,9 @@ footer {
     color: #fff;
     text-align: center;
     padding: 20px;
+    position: sticky;
+    bottom: 0;
+    width: 100vw;
 }
 
 
