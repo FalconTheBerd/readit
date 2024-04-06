@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readit - Share and Discuss Books</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="/Assets/logo.png" type="image/x-icon">
+</head>
+
+<body>
+    <header>
+        <h1>Readit</h1>
+        <br>
+        <nav>
+            <ul>
+                <li><button id="loginBtn">Login/Register</button></li>
+                <li><button id="logoutBtn">Logout</button></li>
+                <li><button id="createPostBtn">Create Post</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main id="postsContainer">
+        <!-- Posts will be dynamically added here -->
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Readit. All rights reserved.</p>
+    </footer>
+
+    <!-- Login/Register Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login/Register</h2>
+            <div id="loginFormContainer">
+                <form id="loginForm">
+                    <label for="email">Username:</label>
+                    <input type="text" id="loginUsername" name="text" required><br> <!-- Unique ID -->
+                    <label for="password">Password:</label>
+                    <input type="password" id="loginPassword" name="password" required><br> <!-- Unique ID -->
+                    <button type="submit">Login</button>
+                </form>
+                <p>Don't have an account? <button id="showRegisterForm">Register here</button></p>
+            </div>
+
+            <div id="registerFormContainer" style="display: none;">
+                <form id="registerForm">
+                    <label for="name">Name:</label>
+                    <input type="text" id="registerName" name="name" required><br> <!-- Unique ID -->
+                    <label for="email">Email:</label>
+                    <input type="email" id="registerEmail" name="email" required><br> <!-- Unique ID -->
+                    <label for="password">Password:</label>
+                    <input type="password" id="registerPassword" name="password" required><br> <!-- Unique ID -->
+                    <button type="submit">Register</button>
+                </form>
+                <p>Already have an account? <button id="showLoginForm">Login here</button></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div id="createPostModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create Post</h2>
+            <form id="createPostForm">
+                <label for="postTitle">Title:</label>
+                <input type="text" id="postTitle" name="postTitle" required style="width: 400px;"><br>
+                <label for="postContent">Content:</label>
+                <textarea id="postContent" name="postContent" rows="4" required style="width: 400px;"></textarea><br>
+                <button type="submit">Create</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <!-- Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBK7geWe8Zw8BI7sMc6kwNYpxsg3d4rPIc",
+            authDomain: "readit-1.firebaseapp.com",
+            databaseURL: "https://readit-1-default-rtdb.firebaseio.com",
+            projectId: "readit-1",
+            storageBucket: "readit-1.appspot.com",
+            messagingSenderId: "310430472197",
+            appId: "1:310430472197:web:50404ebd22ea63bcc0246c"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+
+        // Function to hash password using SHA-256
+        function hashPassword(password) {
+            return CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64); // Hash password using SHA-256
+        }
+
+        // Function to register user
+        function registerUser(username, email, password) {
+            set(ref(db, 'users/' + username), {
+                username: username,
+                email: email,
+                password: password
+            }).then(() => {
+                console.log("User registered successfully");
+                // You can redirect the user or show a success message here
+                alert("User Successfully Created")
+            }).catch((error) => {
+                console.error("Error registering user:", error);
+                alert("Error registering User")
+            });
+        }
+
+        // Event listener for registration form submission
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("registerForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                let username = document.getElementById("registerName").value;
+                let email = document.getElementById("registerEmail").value;
+                let password = hashPassword(document.getElementById("registerPassword").value); // Hash password
+
+                registerUser(username, email, password);
+            });
+
+            // Event listener for login form submission
+            document.getElementById("loginForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                let username = document.getElementById("loginUsername").value;
+                let password = hashPassword(document.getElementById("loginPassword").value); // Hash password
+
+                loginUser(username, password);
+            });
+
+            // Event listener for Create Post button
+            document.getElementById('createPostBtn').addEventListener('click', () => {
+                document.getElementById("createPostModal").style.display = "block";
+            });
+
+            // Event listener for closing create post modal
+            document.getElementById("createPostModal").getElementsByClassName("close")[0].addEventListener("click", function () {
+                document.getElementById("createPostModal").style.display = "none";
+            });
+
+            // Event listener for submitting create post form
+            document.getElementById("createPostForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                const title = document.getElementById("postTitle").value;
+                const content = document.getElementById("postContent").value;
+
+                createPost(title, content);
+
+                // Close the modal after creating post
+                document.getElementById("createPostModal").style.display = "none";
+            });
+
+
+            // Event listener to switch between login and register forms
+            document.getElementById("showRegisterForm").addEventListener("click", function () {
+                document.getElementById("loginFormContainer").style.display = "none";
+                document.getElementById("registerFormContainer").style.display = "block";
+            });
+
+            document.getElementById("showLoginForm").addEventListener("click", function () {
+                document.getElementById("loginFormContainer").style.display = "block";
+                document.getElementById("registerFormContainer").style.display = "none";
+            });
+
+            // Event listener for opening and closing modal
+            document.getElementById("loginBtn").addEventListener("click", function () {
+                document.getElementById("loginModal").style.display = "block";
+            });
+
+            document.getElementsByClassName("close")[0].addEventListener("click", function () {
+                document.getElementById("loginModal").style.display = "none";
+            });
+
+            window.onclick = function (event) {
+                if (event.target == document.getElementById("loginModal")) {
+                    document.getElementById("loginModal").style.display = "none";
+                }
+            };
+
+            // Event listener for logout button
+            document.getElementById("logoutBtn").addEventListener("click", function () {
+                localStorage.removeItem("authenticated");
+                localStorage.removeItem("username");
+                document.getElementById("loginBtn").innerText = "Login/Register";
+            });
+        });
+
+        // Function to login user
+        function loginUser(username, password) {
+            const dbRef = ref(db);
+
+            get(child(dbRef, 'users/' + username)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    if (password === snapshot.val().password) {
+                        localStorage.setItem("authenticated", true);
+                        localStorage.setItem("username", username);
+                        document.getElementById("loginBtn").innerText = "Welcome, " + username;
+                        document.getElementById("loginModal").style.display = "none";
+                        alert("Successfully Signed In!");
+                    } else {
+                        console.log("Invalid password");
+                        alert("Invalid Passowrd")
+                    }
+                } else {
+                    console.log("User not found");
+                    alert("User does not exist")
+                }
+            }).catch((error) => {
+                console.error("Error logging in:", error);
+            });
+        }
+
+        // Function to create post
+        function createPost(title, content) {
+            // Check if the user is authenticated
+            const authenticated = localStorage.getItem("authenticated");
+            if (!authenticated || authenticated !== "true") {
+                alert("You need to be logged in to create a post.");
+                return;
+            }
+
+            const newPostRef = push(ref(db, 'posts'));
+            const newPostId = newPostRef.key;
+            const username = localStorage.getItem("username"); // Retrieve email from localStorage
+            const currentDate = new Date().toISOString(); // Get current date in ISO format
+            set(newPostRef, { id: newPostId, title, content, author: username, date: currentDate })
+                .then(() => {
+                    console.log("Post created successfully!");
+                })
+                .catch((error) => {
+                    console.error("Error creating post: ", error);
+                });
+        }
+
+        // Function to render posts
+        function renderPosts(posts) {
+            const postsContainer = document.getElementById('postsContainer');
+            postsContainer.innerHTML = '';
+
+            // Reverse the order of posts
+            posts.reverse().forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.classList.add('post');
+                postElement.innerHTML = `
+            
+            <h2>${post.title}</h2>
+            <p>${post.content}</p>
+            <p>Posted by: ${post.author}</p>
+            <p>Date of Publish: ${new Date(post.date).toLocaleString()}</p> <!-- Convert ISO date to readable format -->
+            <div class="info">
+                <p class="info-icon">ℹ️</p>
+                <p class="info-text" style="visibility: hidden;">Post ID: ${post.id}</p>
+            </div>
+            `;
+                postsContainer.appendChild(postElement);
+            });
+
+            // Event listener on postsContainer to handle click events
+            postsContainer.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.classList.contains('info-icon')) {
+                    const infoText = target.nextElementSibling;
+                    if (infoText.style.visibility === 'hidden' || !infoText.style.visibility) {
+                        infoText.style.visibility = 'visible';
+                        infoText.style.opacity = '1';
+                    } else {
+                        infoText.style.visibility = 'hidden';
+                        infoText.style.opacity = '0';
+                    }
+                }
+            });
+        }
+
+        // Listen for changes in the database and update posts
+        onValue(ref(db, 'posts'), (snapshot) => {
+            const data = snapshot.val();
+            const posts = [];
+            for (let key in data) {
+                posts.push(data[key]);
+            }
+            renderPosts(posts);
+        });
+    </script>
+
+</body>
+
+</html>

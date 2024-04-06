@@ -1,0 +1,29 @@
+<div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login/Register</h2>
+            <div id="loginFormContainer">
+                <form id="loginForm">
+                    <label for="email">Username:</label>
+                    <input type="text" id="loginUsername" name="text" required><br> <!-- Unique ID -->
+                    <label for="password">Password:</label>
+                    <input type="password" id="loginPassword" name="password" required><br> <!-- Unique ID -->
+                    <button type="submit">Login</button>
+                </form>
+                <p>Don't have an account? <button id="showRegisterForm">Register here</button></p>
+            </div>
+
+            <div id="registerFormContainer" style="display: none;">
+                <form id="registerForm">
+                    <label for="name">Name:</label>
+                    <input type="text" id="registerName" name="name" required><br> <!-- Unique ID -->
+                    <label for="email">Email:</label>
+                    <input type="email" id="registerEmail" name="email" required><br> <!-- Unique ID -->
+                    <label for="password">Password:</label>
+                    <input type="password" id="registerPassword" name="password" required><br> <!-- Unique ID -->
+                    <button type="submit">Register</button>
+                </form>
+                <p>Already have an account? <button id="showLoginForm">Login here</button></p>
+            </div>
+        </div>
+    </div>
